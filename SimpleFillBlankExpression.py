@@ -42,24 +42,38 @@
 #### ×: (legal)[-ly|il-]/[-ly|il] -> Error!
 #### √: (legal)[il-ly]/[il-|-ly]/[il|-ly] -> (illegally)
 ### 7. "~", "^", "-", ">", "=" 均仅能使用一次
+### 8. word 仅由小写字母构成
 
 import re
 from itertools import permutations
 
 class ExpressionError(Exception):
     def __init__(self, ErrorInfo):
-        super().__init__(self) #初始化父类
+        super().__init__(self)
         self.errorinfo = ErrorInfo
     def __str__(self):
         return self.errorinfo
 
-def SFBEx(expression):
+class WordError(Exception):
+    def __init__(self, ErrorInfo):
+        super().__init__(self)
+        self.errorinfo = ErrorInfo
+    def __str__(self):
+        return self.errorinfo
+
+def isletter(string):
+    return set(string).issubset("abcdefghijklmnopqrstuvwxyz")
+
+def SFBEx(word, expression = "~"):
     try:
+        if not isletter(word):
+            raise WordError("Invalid word!")
+
         if not len(expression):
             raise ExpressionError("Please give expression!")
         elif "~" in expression and len(expression) != 1:
             raise ExpressionError("\"~\" must be use alone!")
-        elif not set(expression).issubset(set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~^->=|")):
+        elif not set(expression).issubset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~^->=|"):
             raise ExpressionError("Unrecognizable metacharacter.")
         elif expression.count("^") and expression[0] != "^":
             raise ExpressionError("\"^\" must be use at the beginning!")
@@ -70,9 +84,70 @@ def SFBEx(expression):
         for fbtup in list(permutations("->=", 2)):
             if "".join(fbtup) in expression:
                 raise ExpressionError("\"" + fbtup[0] + "\" and \""  + fbtup[1] + "\" can not be adjacent!")
+    except WordError as Error:
+        print("WordError:", Error)
+        exit()
     except ExpressionError as Error:
         print("ExpressionError:", Error)
         exit()
 
-SFBEx("-=")
+    parts = expression.split("|")
+    wordlist = list(word)
+    updone = not expression.count("^")
+    afterdone = 0
+    dotype = "no"
+    beforetemp = []
+    aftertemp = []
+    begin = 0
+    end = 0
+
+    for part in parts:
+        partplus = list(part)
+        partplus.append("!")
+
+        for unit in range(0, len(partplus)):
+            if not updone:
+                wordlist[0] = wordlist[0].upper()
+                updone = 1
+                begin = 1
+                continue
+
+            if not isletter(partplus[unit]):
+                end = unit
+                if dotype == ">":
+                    try:
+                        if wordlist[-len(beforetemp):] != beforetemp:
+                            raise ExpressionError("The first parameter given by \">\" is invalid!")
+                    except ExpressionError as Error:
+                        print("ExpressionError:", Error)
+                        exit()
+                    del wordlist[-len(beforetemp):]
+                    wordlist.extend(list(part[begin:end]))
+                elif dotype == "=":
+                    try:
+                        if "".join(beforetemp) not in "".join(wordlist):
+                            raise ExpressionError("The first parameter given by \"=\" is nonexistent!")
+                    except ExpressionError as Error:
+                        print("ExpressionError:", Error)
+                        exit()
+                    wordlist = wordlist[:word.rfind("".join(beforetemp))] + list(part[begin:end]) + wordlist[word.rfind("".join(beforetemp)) + len(beforetemp):]
+
+                if partplus[unit] in ">=":
+                    try:
+                        if begin > end:
+                            raise ExpressionError("Please give string to be replaced via \"" + partplus[unit] + "\"!")
+                    except ExpressionError as Error:
+                        print("ExpressionError:", Error)
+                        exit()
+                    beforetemp = partplus[begin:end]
+                    begin = unit
+
+                dotype = partplus[unit]
+
+            begin += 0 if isletter(partplus[unit]) else 1
+            end = begin + 1 if isletter(partplus[unit]) else unit
+
+    print("".join(wordlist))
+
+SFBEx("abcabc", "abc=xyz")
 print(1)
