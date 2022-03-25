@@ -43,6 +43,7 @@
 #### √: (legal)[il-ly]/[il-|-ly]/[il|-ly] -> (illegally)
 ### 7. "~", "^", "-", ">", "=" 均仅能使用一次
 ### 8. word 仅由小写字母构成
+### 9. 严格模式不支持 "|"
 
 import re
 from itertools import permutations
@@ -64,13 +65,15 @@ class WordError(Exception):
 def isletter(string):
     return set(string).issubset("abcdefghijklmnopqrstuvwxyz")
 
-def SFBEx(word, expression = "~"):
+def SFBEx(word, expression = "~", strict = False):
     try:
         if not isletter(word):
             raise WordError("Invalid word!")
 
         if not len(expression):
             raise ExpressionError("Please give expression!")
+        elif strict and "|" in expression:
+            raise ExpressionError("Strict mode doesn't support \"|\" syntax!")
         elif "~" in expression and len(expression) != 1:
             raise ExpressionError("\"~\" must be use alone!")
         elif not set(expression).issubset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~^->=|"):
