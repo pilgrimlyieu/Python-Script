@@ -166,10 +166,14 @@ def SFBEx(word, expression = "~", strict = True):
                     dotype = "no"
                     afterdone = 1
                 elif dotype == "-":
-                    if (len(set(">=") & set(partplus)) == 0) or (">" in partplus and "".join(partplus).index(">") > unit) or ("=" in partplus and "".join(partplus).index("=") > unit):
+                    if (len(set(">=") & set(partplus)) == 0) or (">" in partplus and "".join(partplus).find(">") > unit) or ("=" in partplus and "".join(partplus).find("=") > unit):
                         wordlist.extend(list(part[begin:end]))
                         dotype = "no"
                         afterdone = 1
+                elif dotype == "*":
+                    if wordlist[-len(part[begin:end]):] == list(part[begin:end]):
+                        wordlist = wordlist[:-len(part[begin:end])]
+                        dotype = "no"
 
                 if partplus[unit] in ">=":
                     try:
@@ -203,6 +207,10 @@ def SFBEx(word, expression = "~", strict = True):
                             exit()
                         wordlist = list(part[begin:end]) + wordlist
                         begin = unit
+                elif partplus[unit] == "*":
+                    if unit and isvalid(partplus[unit - 1]):
+                        wordlist = wordlist[len(part[begin:end]):]
+                        begin = unit
 
                 dotype = partplus[unit]
 
@@ -211,9 +219,9 @@ def SFBEx(word, expression = "~", strict = True):
 
     return "".join(wordlist)
 
-print(SFBEx("legal", "-ly|il", False))
+# print(SFBEx("abc", "a*-c", False))
 
-we = {
+TestSamples = {
     "do": "~",
     "apple": "^",
     "relevant": "ir-",
@@ -222,24 +230,41 @@ we = {
     "make": "e>ing",
     "stand": "an=oo",
     "taxman": "a=e",
-    # "shake": "are |e>ing",
-    "shake": "are e>ing",
-    # "correct": "in-|-ly",
+    "impossible": "im*",
+    "foundation": "*ation",
+    "overvalued": "over*d",
+    "shake": "are |e>ing",
+    # "shake": "are e>ing",
+    "correct": "in-|-ly",
     # "correct": "in|-ly",
-    "correct": "in-ly",
+    # "correct": "in-ly",
     # "able": "dis|le>ility",
     "able": "dis-le>ility",
     "favour": "-ite", # E "+ite"
     "mature": "im-ly", # E "im--ly"
     "additional": "^-ly",
     "usual": "un-|-ly",
+    "limitation": "de-*ation",
     "like": "-s", # E "~s"
     "evident": "^-ly", # E "-ly^"
     "agree": "dis-", # E "dis"
-    # "legal": "il-ly", # E "-ly|il-", "-ly|il"
+    "legal": "il-ly", # E "-ly|il-", "-ly|il"
     # "legal": "il-|-ly", # E "-ly|il-", "-ly|il"
-    "legal": "il|-ly", # E "-ly|il-", "-ly|il"
+    # "legal": "il|-ly", # E "-ly|il-", "-ly|il"
 }
 
-# for word, expression in  we.items():
+ErrorSamples = {
+    "agree": "dis",
+    # "favour": "+ite",
+    # "mature": "im--ly",
+    # "like": "~s",
+    # "evident": "-ly^",
+    # "legal": "-ly|il-",
+    "legal": "-ly|il",
+}
+
+# for word, expression in TestSamples.items():
+#     print(SFBEx(word, expression, False))
+
+# for word, expression in ErrorSamples.items():
 #     print(SFBEx(word, expression, False))
