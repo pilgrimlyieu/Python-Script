@@ -1,7 +1,7 @@
 # 文件夹
 /.vscode
 __pycache__/
-/Data/Words2Anki
+/Words2Anki/Data
 
 # 文件名
 Test.*

@@ -67,7 +67,7 @@ def Basic(e, c):
         Error = True
         return 
     mixs = list(zip(words, definitions, phonetics))
-    with open("G:/Assets/Tool/Python/Data/Words2Anki/ECres/Basic.txt", "a+", encoding = "UTF-8") as file:
+    with open("G:/Assets/Tool/Python/Words2Anki/Data/ECres/Basic.txt", "a+", encoding = "UTF-8") as file:
         for i in range(0, len(words)):
             file.write("\t".join(mixs[i]) + "\n")
 
@@ -90,7 +90,7 @@ def Extra(e, c):
         Error = True
         return 
     mixs = list(zip(words, definitions, phonetics))
-    with open("G:/Assets/Tool/Python/Data/Words2Anki/ECres/Extra.txt", "a+", encoding = "UTF-8") as file:
+    with open("G:/Assets/Tool/Python/Words2Anki/Data/ECres/Extra.txt", "a+", encoding = "UTF-8") as file:
         for i in range(0, len(words)):
             file.write("\t".join(mixs[i]) + "\n")
 
@@ -108,7 +108,7 @@ def Phrase(e, c):
         global Error
         Error = True
         return 
-    with open("G:/Assets/Tool/Python/Data/Words2Anki/ECres/Phrases.txt", "a+", encoding = "UTF-8") as file:
+    with open("G:/Assets/Tool/Python/Words2Anki/Data/ECres/Phrases.txt", "a+", encoding = "UTF-8") as file:
         for i in range(0, len(words)):
             file.write(words[i] + "\t" + definitions[i] + "\tphr\n")
 
@@ -151,7 +151,7 @@ def History(dir):
     CopyDir(join(dir, "ECpdf"), join(dir, "EChistory", datetime.now().strftime("%Y-%m-%d")))
     CopyDir(join(dir, "ECres"), join(dir, "EChistory", datetime.now().strftime("%Y-%m-%d")))
 
-def ClearHistory(dir = join(split(abspath(__file__))[0], "Data", "Words2Anki", "EChistory"), target = "", do = False, all = False):
+def ClearHistory(dir = join(split(abspath(__file__))[0], "Data", "EChistory"), target = "", do = False, all = False):
     if do:
         if all:
             rmtree(dir)
@@ -160,7 +160,7 @@ def ClearHistory(dir = join(split(abspath(__file__))[0], "Data", "Words2Anki", "
             rmtree(join(dir, target))
 
 def Main(cache = False, clear = False, beforeclear = False, history = True):
-    dir = join(split(abspath(__file__))[0], "Data", "Words2Anki")
+    dir = join(split(abspath(__file__))[0], "Data")
     target = join(dir, "ECtxt")
     if beforeclear:
         Clear(dir, res = True)

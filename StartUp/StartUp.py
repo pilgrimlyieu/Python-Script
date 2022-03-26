@@ -13,8 +13,8 @@ from datetime import datetime
 import cv2
 
 def ImgAutoClick(tempFile, whatDo, debug = False):
-    pyautogui.screenshot(os.path.join(os.path.split(os.path.abspath(__file__))[0], "Data", "StartUp", "big.png"))
-    gray = cv2.imread(os.path.join(os.path.split(os.path.abspath(__file__))[0], "Data", "StartUp", "big.png"), 0)
+    pyautogui.screenshot(os.path.join(os.path.split(os.path.abspath(__file__))[0], "Data", "big.png"))
+    gray = cv2.imread(os.path.join(os.path.split(os.path.abspath(__file__))[0], "Data", "big.png"), 0)
     img_template = cv2.imread(tempFile, 0)
     w, h = img_template.shape[::-1]
     res = cv2.matchTemplate(gray, img_template, cv2.TM_SQDIFF)
@@ -28,13 +28,13 @@ def ImgAutoClick(tempFile, whatDo, debug = False):
     whatDo(x)
 
     if debug:
-        img = cv2.imread(os.path.join(os.path.split(os.path.abspath(__file__))[0], "Data", "StartUp", "big.png"), 1)
+        img = cv2.imread(os.path.join(os.path.split(os.path.abspath(__file__))[0], "Data", "big.png"), 1)
         cv2.rectangle(img, top_left, bottom_right, (0, 0, 255), 2)
         img = cv2.resize(img, (0, 0), fx = 0.5, fy = 0.5, interpolation = cv2.INTER_NEAREST)
         cv2.imshow("processed", img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-    os.remove(os.path.join(os.path.split(os.path.abspath(__file__))[0], "Data", "StartUp", "big.png"))
+    os.remove(os.path.join(os.path.split(os.path.abspath(__file__))[0], "Data", "big.png"))
 
 def SignIn(option, tm, aim, png):
     global now
@@ -45,7 +45,7 @@ def SignIn(option, tm, aim, png):
             time.sleep(10)
             ImgAutoClick(png, pyautogui.click, False)
 
-target = os.path.join(os.path.split(os.path.abspath(__file__))[0], "Data", "StartUp")
+target = os.path.join(os.path.split(os.path.abspath(__file__))[0], "Data")
 files = {
     "WeMeetApp": ["os", "12345", "D:/Program Files/Tencent/WeMeet/wemeetapp.exe"],
     "WeChat": ["os", "0123456", "D:/Program Files/WeChat/WeChat.exe"],

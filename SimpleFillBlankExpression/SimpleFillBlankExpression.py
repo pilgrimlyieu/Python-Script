@@ -214,7 +214,6 @@ def SFBEx(word, expression = "~", strict = True):
                     else:
                         beforetemp = partplus[begin:end]
                     begin = unit
-
                 # "-" 前缀
                 elif partplus[unit] == "-":
                     if unit and isvalid(partplus[unit - 1]):
@@ -235,7 +234,6 @@ def SFBEx(word, expression = "~", strict = True):
                             exit()
                         wordlist = list(part[begin:end]) + wordlist
                         begin = unit
-
                 # "*" 去除前缀
                 elif partplus[unit] == "*":
                     if unit and isvalid(partplus[unit - 1]):
