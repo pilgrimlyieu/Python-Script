@@ -15,6 +15,10 @@
 #### "=" 中间转换（向前匹配）
 ##### (stand)[an=oo] -> (stood)
 ##### (taxman)[a=e] -> (taxmen)
+#### "*" 去除前缀/后缀
+##### (impossible)[im*] -> (possible)
+##### (foundation)[*ation] -> (found)
+##### (overvalued)[over*d] -> (value)
 ### 定界符
 #### "|" 操作分区
 ##### (shake)[are |e>ing]/[are e>ing] -> (are shaking) {中间有空格，可省略}
@@ -24,11 +28,12 @@
 ### 1. 仅允许出现字母、"~"、"^"、"-"、">"、"="、"|"
 #### ×: (favour)[+ite] -> Error!
 #### √: (favour)[-ite] -> (favourite)
-### 2. 除 "^" 和 "|" 外，其它任意两个特殊符号不能连用
+### 2. 除 "^" 和 "|" 及 "-" 与 "*"外，其它任意两个特殊符号不能连用
 #### ×: (mature)[im--ly] -> Error!
 #### √: (mature)[im-ly] -> (immaturely)
 #### √: (additional)[^-ly] -> (Additionally)
 #### √: (usual)[un-|-ly] -> (unusually)
+#### √: (limitation)[de-*ation] -> (delimit) {与 "*" 连用时表示前缀的 "-" 不可省略}
 ### 3. "~" 必须单独存在
 #### ×: (like)[~s] -> Error!
 #### √: (like)[-s] -> (likes)
@@ -63,17 +68,14 @@ class WordError(Exception):
     def __str__(self):
         return self.errorinfo
 
-def isletter(string):
-    return set(string).issubset("abcdefghijklmnopqrstuvwxyz")
-
 def isvalid(string):
     return set(string).issubset("abcdefghijklmnopqrstuvwxyz ")
 
 def SFBEx(word, expression = "~", strict = True):
-    if isletter(expression):
+    if isvalid(expression):
         return expression
     try:
-        if not isletter(word):
+        if not isvalid(word):
             raise WordError("Invalid word!")
 
         if not len(expression):
@@ -112,12 +114,15 @@ def SFBEx(word, expression = "~", strict = True):
 
     for part in parts:
         try:
-            if isvalid(part) and beforedone:
-                raise ExpressionError("Can not give more than one prefix!")
+            if isvalid(part):
+                if beforedone:
+                    raise ExpressionError("Can not give more than one prefix!")
+                elif afterdone:
+                    raise ExpressionError("Can not give suffix before prefix!")
         except ExpressionError as Error:
             print("ExpressionError:", Error)
             exit()
-        if isvalid(part) and not beforedone:
+        if isvalid(part):
             wordlist = list(part) + wordlist
             beforedone = 1
 
@@ -193,9 +198,15 @@ def SFBEx(word, expression = "~", strict = True):
                             except ExpressionError as Error:
                                 print("ExpressionError:", Error)
                                 exit()
-                        if not afterdone:
-                            wordlist = list(part[begin:end]) + wordlist
-                            begin = unit
+                        try:
+                            if afterdone:
+                                raise ExpressionError("Can not give suffix before prefix!")
+                        except ExpressionError as Error:
+                            print("ExpressionError:", Error)
+                            exit()
+                        print(1)
+                        wordlist = list(part[begin:end]) + wordlist
+                        begin = unit
 
                 dotype = partplus[unit]
 
@@ -203,6 +214,8 @@ def SFBEx(word, expression = "~", strict = True):
             end = begin + 1 if isvalid(partplus[unit]) else unit
 
     return "".join(wordlist)
+
+print(SFBEx("have done", "h d|ne>", False))
 
 we = {
     "do": "~",
@@ -232,5 +245,5 @@ we = {
     # "legal": "il|-ly", # E "-ly|il-", "-ly|il"
 }
 
-for word, expression in  we.items():
-    print(SFBEx(word, expression, False))
+# for word, expression in  we.items():
+#     print(SFBEx(word, expression, False))
