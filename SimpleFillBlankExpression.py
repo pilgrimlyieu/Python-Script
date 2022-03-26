@@ -28,7 +28,7 @@
 ### 1. 仅允许出现字母、"~"、"^"、"-"、">"、"="、"|"
 #### ×: (favour)[+ite] -> Error!
 #### √: (favour)[-ite] -> (favourite)
-### 2. 除 "^" 和 "|" 及 "-" 与 "*"外，其它任意两个特殊符号不能连用
+### 2. 除 "^" 和 "|" 及 "-" 与 "*" 外，其它任意两个特殊符号不能连用
 #### ×: (mature)[im--ly] -> Error!
 #### √: (mature)[im-ly] -> (immaturely)
 #### √: (additional)[^-ly] -> (Additionally)
@@ -40,25 +40,19 @@
 ### 4. "^" 仅能出现在开头
 #### ×: (evident)[-ly^] -> Error!
 #### √: (evident)[^-ly] -> (Evidently)
-### 5. 仅由字母构成的表达式视为「对原式的替换」
+### 5. 仅由字母及空格构成的表达式视为「对原式的替换」
 #### ×: (agree)[dis] -> (dis)
 #### √: (agree)[dis-] -> (disagree)
 ### 6. 向后的处理必须先于向前的处理，例如前缀必须写在后缀前
 #### ×: (legal)[-ly|il-]/[-ly|il] -> Error!
 #### √: (legal)[il-ly]/[il-|-ly]/[il|-ly] -> (illegally)
 ### 7. 除了非严格模式下的 "-" 及 "*" 能使用两次（通过 "|"）和非严格模式下的 "|" 外，其他符号均仅能使用一次
-### 8. word 仅由小写字母构成
+### 8. word 仅由小写字母及空格构成
 ### 9. 严格模式不支持 "|"
 ### 10. 严格模式不支持多后缀语法
 ### 11. 仅前缀（"-", "*"）支持空格，后缀（"-", "*", ">", "="）不支持空格
 
-class ExpressionError(Exception):
-    def __init__(self, ErrorInfo):
-        super().__init__(self)
-        self.errorinfo = ErrorInfo
-    def __str__(self):
-        return self.errorinfo
-
+# 单词错误
 class WordError(Exception):
     def __init__(self, ErrorInfo):
         super().__init__(self)
@@ -66,35 +60,58 @@ class WordError(Exception):
     def __str__(self):
         return self.errorinfo
 
+# 表达式错误
+class ExpressionError(Exception):
+    def __init__(self, ErrorInfo):
+        super().__init__(self)
+        self.errorinfo = ErrorInfo
+    def __str__(self):
+        return self.errorinfo
+
+# 一般符
 def isvalid(string):
     return set(string).issubset("abcdefghijklmnopqrstuvwxyz ")
 
 def SFBEx(word, expression = "~", strict = True):
+    # 5.
     if isvalid(expression):
         return expression
+
     try:
+        # 判断输入单词有效性
         if not isvalid(word):
             raise WordError("Invalid word!")
 
+        # 要求非空表达式
         if not len(expression):
             raise ExpressionError("Please give expression!")
+        # 3. 
         elif "~" in expression and len(expression) != 1:
             raise ExpressionError("\"~\" must be use alone!")
+        # 9. 
         elif strict and "|" in expression:
             raise ExpressionError("Strict mode doesn't support \"|\" syntax!")
+        # 10. 
         elif strict and len(set(expression) & set("->=*")) >= 2:
             raise ExpressionError("Strict mode doesn't support more than one suffix syntax!")
+        # 1. 
         elif not set(expression).issubset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~^->=*| "):
             raise ExpressionError("Unrecognizable metacharacter.")
+        # 4.
         elif expression.count("^") and expression[0] != "^":
             raise ExpressionError("\"^\" must be use at the beginning!")
 
+        # 7.
         for string in "-*":
-            if expression.count(string) >= 3:
+            if strict:
+                raise ExpressionError("\"" + string + "\" can be used only once in strict mode!")
+            elif expression.count(string) >= 3:
                 raise ExpressionError("\"" + string + "\" can be used twice at most!")
+        # 7.
         for string in "^>=":
             if expression.count(string) >= 2:
                 raise ExpressionError("\"" + string + "\" can be used only once!")
+        # 2.
         for string1 in "->=*":
             for string2 in "->=*":
                 if set(string1 + string2) == {"-", "*"}:
@@ -115,6 +132,7 @@ def SFBEx(word, expression = "~", strict = True):
     afterdone = 0
 
     for part in parts:
+        # 前缀替换
         try:
             if isvalid(part):
                 if beforedone:
@@ -136,14 +154,18 @@ def SFBEx(word, expression = "~", strict = True):
         end = 0
 
         for unit in range(0, len(partplus)):
+            # 首字母大写检验
             if not updone:
                 wordlist[0] = wordlist[0].upper()
                 updone = 1
                 begin = 1
                 continue
 
+            # 特殊符号检验
             if not isvalid(partplus[unit]):
                 end = unit
+
+                # ">"
                 if dotype == ">":
                     try:
                         if wordlist[-len(beforetemp):] != beforetemp:
@@ -155,6 +177,7 @@ def SFBEx(word, expression = "~", strict = True):
                     wordlist.extend(list(part[begin:end]))
                     dotype = "no"
                     afterdone = 1
+                # "="
                 elif dotype == "=":
                     try:
                         if "".join(beforetemp) not in "".join(wordlist):
@@ -165,16 +188,19 @@ def SFBEx(word, expression = "~", strict = True):
                     wordlist = wordlist[:"".join(wordlist).rfind("".join(beforetemp))] + list(part[begin:end]) + wordlist["".join(wordlist).rfind("".join(beforetemp)) + len(beforetemp):]
                     dotype = "no"
                     afterdone = 1
+                # "-" 后缀
                 elif dotype == "-":
                     if (len(set(">=") & set(partplus)) == 0) or (">" in partplus and "".join(partplus).find(">") > unit) or ("=" in partplus and "".join(partplus).find("=") > unit):
                         wordlist.extend(list(part[begin:end]))
                         dotype = "no"
                         afterdone = 1
+                # "*" 去除后缀
                 elif dotype == "*":
                     if wordlist[-len(part[begin:end]):] == list(part[begin:end]):
                         wordlist = wordlist[:-len(part[begin:end])]
                         dotype = "no"
 
+                # ">", "=" 获取第一个参数
                 if partplus[unit] in ">=":
                     try:
                         if begin >= end:
@@ -188,6 +214,8 @@ def SFBEx(word, expression = "~", strict = True):
                     else:
                         beforetemp = partplus[begin:end]
                     begin = unit
+
+                # "-" 前缀
                 elif partplus[unit] == "-":
                     if unit and isvalid(partplus[unit - 1]):
                         if not strict:
@@ -207,6 +235,8 @@ def SFBEx(word, expression = "~", strict = True):
                             exit()
                         wordlist = list(part[begin:end]) + wordlist
                         begin = unit
+
+                # "*" 去除前缀
                 elif partplus[unit] == "*":
                     if unit and isvalid(partplus[unit - 1]):
                         wordlist = wordlist[len(part[begin:end]):]
