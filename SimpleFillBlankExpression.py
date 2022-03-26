@@ -46,13 +46,11 @@
 ### 6. 向后的处理必须先于向前的处理，例如前缀必须写在后缀前
 #### ×: (legal)[-ly|il-]/[-ly|il] -> Error!
 #### √: (legal)[il-ly]/[il-|-ly]/[il|-ly] -> (illegally)
-### 7. 除非严格模式下的 "-" 能使用两次（通过 "|"）和非严格模式下的 "|" 外，其他符号均仅能使用一次
+### 7. 除了非严格模式下的 "-" 及 "*" 能使用两次（通过 "|"）和非严格模式下的 "|" 外，其他符号均仅能使用一次
 ### 8. word 仅由小写字母构成
 ### 9. 严格模式不支持 "|"
 ### 10. 严格模式不支持多后缀语法
-
-import re
-from itertools import permutations
+### 11. 仅前缀（"-", "*"）支持空格，后缀（"-", "*", ">", "="）不支持空格
 
 class ExpressionError(Exception):
     def __init__(self, ErrorInfo):
@@ -84,21 +82,25 @@ def SFBEx(word, expression = "~", strict = True):
             raise ExpressionError("\"~\" must be use alone!")
         elif strict and "|" in expression:
             raise ExpressionError("Strict mode doesn't support \"|\" syntax!")
-        elif strict and len(set(expression) & set("->=")) >= 2:
+        elif strict and len(set(expression) & set("->=*")) >= 2:
             raise ExpressionError("Strict mode doesn't support more than one suffix syntax!")
-        elif not set(expression).issubset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~^->=| "):
+        elif not set(expression).issubset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~^->=*| "):
             raise ExpressionError("Unrecognizable metacharacter.")
         elif expression.count("^") and expression[0] != "^":
             raise ExpressionError("\"^\" must be use at the beginning!")
 
-        if expression.count("-") >= 3:
-            raise ExpressionError("\"-\" can be used twice at most!")
+        for string in "-*":
+            if expression.count(string) >= 3:
+                raise ExpressionError("\"" + string + "\" can be used twice at most!")
         for string in "^>=":
             if expression.count(string) >= 2:
                 raise ExpressionError("\"" + string + "\" can be used only once!")
-        for fbtup in list(permutations("->=", 2)):
-            if "".join(fbtup) in expression:
-                raise ExpressionError("\"" + fbtup[0] + "\" and \""  + fbtup[1] + "\" can not be adjacent!")
+        for string1 in "->=*":
+            for string2 in "->=*":
+                if set(string1 + string2) == {"-", "*"}:
+                    continue
+                elif string1 + string2 in expression:
+                    raise ExpressionError("\"" + string1 + "\" and \""  + string2 + "\" can not be adjacent!")
     except WordError as Error:
         print("WordError:", Error)
         exit()
@@ -164,19 +166,10 @@ def SFBEx(word, expression = "~", strict = True):
                     dotype = "no"
                     afterdone = 1
                 elif dotype == "-":
-                    if len(set(">=") & set(partplus)) == 0:
+                    if (len(set(">=") & set(partplus)) == 0) or (">" in partplus and "".join(partplus).index(">") > unit) or ("=" in partplus and "".join(partplus).index("=") > unit):
                         wordlist.extend(list(part[begin:end]))
                         dotype = "no"
-                    else:
-                        temp = -1
-                        if ">" in partplus and "".join(partplus).index(">") > unit:
-                            temp += 1
-                        elif "=" in partplus and "".join(partplus).index("=") > unit:
-                            temp += 1
-                        if temp == 1:
-                            wordlist.extend(list(part[begin:end]))
-                            dotype = "no"
-                            temp = -1
+                        afterdone = 1
 
                 if partplus[unit] in ">=":
                     try:
@@ -185,7 +178,11 @@ def SFBEx(word, expression = "~", strict = True):
                     except ExpressionError as Error:
                         print("ExpressionError:", Error)
                         exit()
-                    beforetemp = partplus[begin:end]
+                    if " " in partplus[begin:end]:
+                        wordlist = partplus[:"".join(partplus[begin:end]).rfind(" ") + 1] + wordlist
+                        beforetemp = partplus["".join(partplus[begin:end]).rfind(" ") + 1:end]
+                    else:
+                        beforetemp = partplus[begin:end]
                     begin = unit
                 elif partplus[unit] == "-":
                     if unit and isvalid(partplus[unit - 1]):
@@ -204,7 +201,6 @@ def SFBEx(word, expression = "~", strict = True):
                         except ExpressionError as Error:
                             print("ExpressionError:", Error)
                             exit()
-                        print(1)
                         wordlist = list(part[begin:end]) + wordlist
                         begin = unit
 
@@ -215,7 +211,7 @@ def SFBEx(word, expression = "~", strict = True):
 
     return "".join(wordlist)
 
-print(SFBEx("have done", "h d|ne>", False))
+print(SFBEx("legal", "-ly|il", False))
 
 we = {
     "do": "~",
@@ -226,13 +222,13 @@ we = {
     "make": "e>ing",
     "stand": "an=oo",
     "taxman": "a=e",
-    "shake": "are |e>ing",
-    # "shake": "are e>ing", TOFIX
-    "correct": "in-|-ly",
-    "correct": "in|-ly",
+    # "shake": "are |e>ing",
+    "shake": "are e>ing",
+    # "correct": "in-|-ly",
+    # "correct": "in|-ly",
     "correct": "in-ly",
-    "able": "dis|le>ility",
-    # "able": "dis-le>ility",
+    # "able": "dis|le>ility",
+    "able": "dis-le>ility",
     "favour": "-ite", # E "+ite"
     "mature": "im-ly", # E "im--ly"
     "additional": "^-ly",
@@ -240,9 +236,9 @@ we = {
     "like": "-s", # E "~s"
     "evident": "^-ly", # E "-ly^"
     "agree": "dis-", # E "dis"
-    "legal": "il-ly", # E "-ly|il-", "-ly|il"
+    # "legal": "il-ly", # E "-ly|il-", "-ly|il"
     # "legal": "il-|-ly", # E "-ly|il-", "-ly|il"
-    # "legal": "il|-ly", # E "-ly|il-", "-ly|il"
+    "legal": "il|-ly", # E "-ly|il-", "-ly|il"
 }
 
 # for word, expression in  we.items():
