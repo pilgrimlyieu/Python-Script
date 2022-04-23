@@ -20,6 +20,7 @@ def Format(txt):
     txt = sub(r"(?<=[\u4e00-\u9fa5])\.{2}|\.{2}(?=[\u4e00-\u9fa5])", r"……", txt)
     txt = sub(r" ?\.{3} ?", r" ... ", txt)
     txt = sub(r"·|・", r".", txt)
+    txt = sub(r"_{2,}", r"", txt)
     txt = txt.replace("!", "'")
     txt = txt.replace("a^j", "adj")
     txt = txt.replace("a<j", "adj")
