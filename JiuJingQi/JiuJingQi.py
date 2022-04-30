@@ -128,7 +128,7 @@ class Chess:
     27 以内三进制
 
     @param {number}[0 - 26] number 目标数字
-    @return {string} * 三进制字符串
+    @return {string} 三进制字符串
     '''
     @staticmethod
     def __Simtern(number):
@@ -141,7 +141,7 @@ class Chess:
     生成种子
 
     @param {number}[0 - 2] _Player 当前玩家
-    @param {string}[?, A - Z] _Area 当前区域
+    @param {string}[?, A - I] _Area 当前区域
     @param {dictionary} _LocationPosition 棋盘内容
     @return {string} _Seed 种子
     '''
